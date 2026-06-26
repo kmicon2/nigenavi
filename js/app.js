@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log("NigeNavi initialized");
 
   const searchButton = document.getElementById("searchButton");
@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let selectedMode = "walk";
   let currentResults = [];
+  let currentPosition = null;
 
   // -------------------------
   // 移動手段
@@ -22,71 +23,59 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // -------------------------
-  // 検索
+  // 🔥 起動時GPS取得
   // -------------------------
-  searchButton.addEventListener("click", async () => {
-    console.log("=== SEARCH START ===");
-
+  async function initGPS() {
     try {
-      // UI即時反映（固まってない確認用）
-      document.getElementById("locationStatus").innerText = "📡 GPS取得中...";
+      document.getElementById("locationStatus").innerText = "📡 位置情報取得中...";
 
-      console.log("GPS request start");
+      const position = await LocationService.getCurrentPosition();
 
-      // -------------------------
-      // GPS（安全タイムアウト付き）
-      // -------------------------
-      const position = await Promise.race([
-        LocationService.getCurrentPosition(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("GPS TIMEOUT")), 12000)
-        )
-      ]);
-
-      console.log("GPS OK:", position);
+      currentPosition = position;
 
       UI.updateLocation(position);
 
-      // -------------------------
-      // データ取得
-      // -------------------------
+      console.log("GPS READY");
+    } catch (e) {
+      console.error("GPS INIT ERROR:", e);
+
+      document.getElementById("locationStatus").innerText =
+        "⚠️ 位置情報取得に失敗しました";
+    }
+  }
+
+  // 起動直後に実行
+  await initGPS();
+
+  // -------------------------
+  // 検索（GPS再取得なし）
+  // -------------------------
+  searchButton.addEventListener("click", async () => {
+    console.log("SEARCH START");
+
+    try {
       const response = await fetch("data/dummy_safepoints.json");
       const data = await response.json();
 
-      console.log("DATA LOADED");
+      let results = SearchService.search(
+        data,
+        currentPosition,
+        selectedMode
+      );
 
-      // -------------------------
-      // 検索
-      // -------------------------
-      let results = SearchService.search(data, position, selectedMode);
-
-      if (!Array.isArray(results)) {
-        console.warn("results invalid:", results);
-        results = [];
-      }
+      if (!Array.isArray(results)) results = [];
 
       currentResults = results;
 
-      console.log("RESULTS:", results);
-
-      // -------------------------
-      // 0件処理（確実に通す）
-      // -------------------------
       if (results.length === 0) {
-        console.log("NO RESULTS → EMERGENCY MODE");
         UI.showEmergencyFallback();
         return;
       }
 
-      // -------------------------
-      // 通常表示
-      // -------------------------
       UI.renderResults(results.slice(0, 3));
 
     } catch (error) {
-      console.error("SEARCH ERROR:", error);
-
-      // どんな失敗でも必ず表示
+      console.error(error);
       UI.showEmergencyFallback();
     }
   });
@@ -95,17 +84,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ルート
   // -------------------------
   routeButton.addEventListener("click", () => {
-    if (!currentResults || currentResults.length === 0) {
-      console.log("NO ROUTE TARGET");
-      return;
-    }
+    if (!currentResults.length) return;
 
     const target = currentResults[0];
-
-    if (!target.lat || !target.lng) {
-      console.warn("invalid target", target);
-      return;
-    }
 
     const url = `https://www.google.com/maps?q=${target.lat},${target.lng}`;
     window.open(url, "_blank");
