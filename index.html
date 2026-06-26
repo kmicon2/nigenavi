@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>逃げナビ</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+<header class="header">
+  <h1>逃げナビ</h1>
+  <p class="subtitle">津波避難支援アプリ</p>
+</header>
+
+<main class="container">
+
+  <section class="card">
+    <h2>現在地</h2>
+    <div id="locationStatus">GPS待機中...</div>
+  </section>
+
+  <section class="card">
+    <h2>移動手段</h2>
+
+    <button class="transport-button active" data-mode="walk">徒歩</button>
+    <button class="transport-button" data-mode="bike">自転車</button>
+    <button class="transport-button" data-mode="car">車</button>
+  </section>
+
+  <section class="card">
+    <button id="searchButton" class="search-button">
+      避難先を検索
+    </button>
+  </section>
+
+  <section id="resultContainer"></section>
+
+  <section class="notice">
+    このアプリは参考情報です。安全を保証するものではありません。
+  </section>
+
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/location.js"></script>
+<script src="js/scoring.js"></script>
+<script src="js/search.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

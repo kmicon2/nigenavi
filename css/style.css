@@ -1,0 +1,87 @@
+/* =========================
+   NigeNavi - Style
+   Apple風ミニマルUI
+========================= */
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial;
+  background: #f5f7fb;
+  color: #1c1c1e;
+}
+
+.header {
+  text-align: center;
+  padding: 24px 16px 8px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #8e8e93;
+}
+
+.container {
+  padding: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.transport-button {
+  width: 32%;
+  margin: 4px 1%;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #f0f0f5;
+  font-size: 14px;
+}
+
+.transport-button.active {
+  background: #007aff;
+  color: white;
+}
+
+.search-button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #34c759;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+#resultContainer {
+  margin-top: 12px;
+}
+
+.empty-card {
+  background: #fff;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: center;
+  color: #8e8e93;
+}
+
+.notice {
+  font-size: 11px;
+  color: #8e8e93;
+  text-align: center;
+  margin-top: 20px;
+}
