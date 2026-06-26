@@ -1,166 +1,93 @@
-//////////////////////////////
-// NigeNavi - ui.js
-// UI制御・状態管理
-//////////////////////////////
+const UI = {
+  init() {
+    this.cacheElements();
+    this.bindEvents();
+  },
 
-const UI = (() => {
+  cacheElements() {
+    this.locationStatus = document.getElementById("locationStatus");
+    this.resultContainer = document.getElementById("resultContainer");
+    this.searchButton = document.getElementById("searchButton");
+  },
 
-  // =========================
-  // 初期化
-  // =========================
-  function init() {
-    setEmptyState();
-  }
+  bindEvents() {
+    // 追加UIイベントがあればここ
+  },
 
-  // =========================
-  // 空状態
-  // =========================
-  function setEmptyState() {
+  updateLocation(position) {
+    if (!this.locationStatus) return;
 
-    const el = document.getElementById("resultContainer");
-    if (!el) return;
+    const { latitude, longitude, accuracy } = position.coords;
 
-    el.innerHTML = `
-      <div class="empty-card">
-        検索すると避難候補が表示されます
-      </div>
+    this.locationStatus.innerHTML = `
+      📍 現在地取得完了<br>
+      緯度: ${latitude.toFixed(5)}<br>
+      経度: ${longitude.toFixed(5)}<br>
+      精度: 約${Math.round(accuracy)}m
     `;
-  }
+  },
 
-  // =========================
-  // ローディング
-  // =========================
-  function setLoadingState() {
+  renderResults(results) {
+    if (!this.resultContainer) return;
 
-    const el = document.getElementById("resultContainer");
-    if (!el) return;
+    this.resultContainer.innerHTML = results.map(r => {
+      const riskColor =
+        r.margin >= 10 ? "🟢" :
+        r.margin >= 5 ? "🟡" :
+        "🔴";
 
-    el.innerHTML = `
-      <div class="empty-card">
-        検索中...
-      </div>
-    `;
-  }
+      return `
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:6px;height:40px;background:${
+              r.margin >= 10 ? "#34c759" :
+              r.margin >= 5 ? "#ffcc00" :
+              "#ff3b30"
+            };border-radius:3px;"></div>
 
-  // =========================
-  // エラー表示
-  // =========================
-  function setErrorState(message) {
+            <div>
+              <div style="font-weight:bold;font-size:16px;">
+                ${riskColor} ${r.name}
+              </div>
 
-    const el = document.getElementById("resultContainer");
-    if (!el) return;
+              <div style="font-size:14px;color:#555;">
+                🏃 ${r.travelTime}分 / 🌊 ${r.tsunamiTime}分
+              </div>
 
-    el.innerHTML = `
-      <div class="empty-card" style="color:#ff3b30;">
-        ${message || "エラーが発生しました"}
-      </div>
-    `;
-  }
-
-  // =========================
-  // GPS表示更新
-  // =========================
-  function updateLocationStatus(text, loading = false) {
-
-    const el = document.getElementById("locationStatus");
-    if (!el) return;
-
-    el.textContent = text;
-
-    if (loading) {
-      el.classList.add("loading");
-    } else {
-      el.classList.remove("loading");
-    }
-  }
-
-  // =========================
-  // 移動手段UI
-  // =========================
-  function updateTransportUI(mode) {
-
-    document.querySelectorAll(".transport-button")
-      .forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.mode === mode);
-      });
-  }
-
-  // =========================
-  // ボタン制御
-  // =========================
-  function setSearchButton(enabled) {
-
-    const btn = document.getElementById("searchButton");
-    if (!btn) return;
-
-    btn.disabled = !enabled;
-  }
-
-  // =========================
-  // 結果描画
-  // =========================
-  function renderResults(results) {
-
-    const container = document.getElementById("resultContainer");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    if (!results.length) {
-      setEmptyState();
-      return;
-    }
-
-    results.forEach(r => {
-
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const color =
-        r.riskLevel === "green" ? "#34c759" :
-        r.riskLevel === "yellow" ? "#ffcc00" :
-        r.riskLevel === "red" ? "#ff3b30" : "#ccc";
-
-      card.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:6px; height:40px; background:${color}; border-radius:3px;"></div>
-
-          <div style="flex:1;">
-            <div style="font-weight:600;">${r.name}</div>
-
-            <div style="font-size:12px; color:#666;">
-              🏃 ${r.travelTime}分 / 🌊 ${r.tsunamiTime}分
-            </div>
-
-            <div style="font-size:12px; color:#666;">
-              距離 ${r.distanceKm}km / 標高差 ${r.elevationMargin}m
-            </div>
-
-            <div style="font-size:12px; font-weight:600;">
-              余裕 ${r.marginMinutes}分
+              <div style="font-size:12px;color:#888;">
+                距離: ${r.distance.toFixed(2)}km | 標高差: ${r.elevation}m
+              </div>
             </div>
           </div>
         </div>
       `;
+    }).join("");
+  },
 
-      container.appendChild(card);
-    });
+  showEmergencyFallback() {
+    if (!this.resultContainer) return;
+
+    this.resultContainer.innerHTML = `
+      <div class="card" style="border-left:6px solid #d60000;">
+        <div style="color:#d60000;font-weight:bold;font-size:16px;">
+          ⚠️ 安全な避難先が検出できませんでした
+        </div>
+
+        <div style="margin-top:10px;font-size:14px;line-height:1.6;">
+          推奨行動：<br>
+          ・その場から直ちに高台方向へ移動してください<br>
+          ・海岸・河川から離れてください<br>
+          ・可能であれば標高の高い建物へ避難してください
+        </div>
+      </div>
+    `;
   }
+};
 
-  // =========================
-  // 公開API
-  // =========================
-  return {
-    init,
-    setEmptyState,
-    setLoadingState,
-    setErrorState,
-    updateLocationStatus,
-    updateTransportUI,
-    setSearchButton,
-    renderResults
-  };
-
-})();
-
+// グローバル公開
 window.UI = UI;
+
+// 初期化
+document.addEventListener("DOMContentLoaded", () => {
+  UI.init();
+});

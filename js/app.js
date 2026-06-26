@@ -1,126 +1,63 @@
-//////////////////////////////
-// NigeNavi - app.js
-// 全体制御・起動エンジン
-//////////////////////////////
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("NigeNavi initialized");
 
-const App = (() => {
+  const searchButton = document.getElementById("searchButton");
 
-  let userPosition = null;
   let selectedMode = "walk";
+  let currentResults = [];
 
-  // =========================
-  // 初期化
-  // =========================
-  function init() {
-    bindEvents();
-    initLocation();
-    UI.init();
-  }
+  // 移動手段選択
+  document.querySelectorAll(".transport-button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".transport-button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedMode = btn.dataset.mode;
+    });
+  });
 
-  // =========================
-  // イベント登録
-  // =========================
-  function bindEvents() {
-
-    document.querySelectorAll(".transport-button")
-      .forEach(btn => {
-        btn.addEventListener("click", () => {
-          setMode(btn.dataset.mode);
-        });
-      });
-
-    const searchBtn = document.getElementById("searchButton");
-
-    if (searchBtn) {
-      searchBtn.addEventListener("click", handleSearch);
-    }
-  }
-
-  // =========================
-  // GPS取得
-  // =========================
-  async function initLocation() {
-
-    UI.updateLocationStatus("GPS取得中...", true);
+  // 検索実行
+  searchButton.addEventListener("click", async () => {
+    console.log("search start");
 
     try {
+      // GPS取得
+      const position = await LocationService.getCurrentPosition();
+      UI.updateLocation(position);
 
-      const pos = await LocationService.getCurrentPosition();
+      // データ取得
+      const data = await fetch("data/dummy_safepoints.json").then(r => r.json());
 
-      userPosition = pos;
+      // 検索・スコアリング
+      const results = SearchService.search(data, position, selectedMode);
 
-      UI.updateLocationStatus(
-        `取得完了（精度 ${Math.round(pos.accuracy)}m）`
-      );
+      currentResults = results;
 
-    } catch (e) {
+      // =========================
+      // 🔥 ここが今回の修正ポイント
+      // =========================
 
-      console.error(e);
+      if (!results || results.length === 0) {
+        UI.showEmergencyFallback();
+        return;
+      }
 
-      UI.updateLocationStatus("GPS取得に失敗しました");
+      // 通常表示（上位3件）
+      UI.renderResults(results.slice(0, 3));
+
+    } catch (error) {
+      console.error("search error:", error);
+      UI.showEmergencyFallback();
     }
-  }
+  });
 
-  // =========================
-  // 移動手段
-  // =========================
-  function setMode(mode) {
+  // ルートボタン（Phase1は仮）
+  const routeButton = document.getElementById("routeButton");
+  routeButton.addEventListener("click", () => {
+    if (!currentResults.length) return;
 
-    selectedMode = mode;
+    const target = currentResults[0];
 
-    UI.updateTransportUI(mode);
-  }
-
-  // =========================
-  // 検索処理
-  // =========================
-  async function handleSearch() {
-
-    if (!userPosition) {
-      UI.setErrorState("現在地が取得できていません");
-      return;
-    }
-
-    UI.setLoadingState();
-
-    try {
-
-      const res = await fetch("data/dummy_safepoints.json");
-      const points = await res.json();
-
-      // データ整形
-      const enriched = SearchService.filterSafePoints(
-        points,
-        userPosition,
-        selectedMode
-      );
-
-      // スコアリング
-      const results =
-        ScoringService.evaluateCandidates(userPosition, enriched);
-
-      UI.renderResults(results);
-
-    } catch (e) {
-
-      console.error(e);
-
-      UI.setErrorState("検索に失敗しました");
-    }
-  }
-
-  // =========================
-  // 公開API
-  // =========================
-  return {
-    init
-  };
-
-})();
-
-// =========================
-// 起動
-// =========================
-window.addEventListener("DOMContentLoaded", () => {
-  App.init();
+    const url = `https://www.google.com/maps?q=${target.lat},${target.lng}`;
+    window.open(url, "_blank");
+  });
 });
