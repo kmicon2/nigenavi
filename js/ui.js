@@ -21,8 +21,6 @@ const UI = {
 
     this.locationStatus.innerHTML = `
       📍 現在地取得完了<br>
-      緯度: ${latitude.toFixed(5)}<br>
-      経度: ${longitude.toFixed(5)}<br>
       精度: 約${Math.round(accuracy)}m
     `;
   },
