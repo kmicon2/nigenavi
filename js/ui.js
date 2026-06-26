@@ -1,11 +1,11 @@
 class UI {
   constructor() {
-    this.locationStatus = document.getElementById("locationStatus");
     this.resultList = document.getElementById("resultList");
+    this.locationStatus = document.getElementById("locationStatus");
   }
 
   // -------------------------
-  // 現在地表示（市区町村化）
+  // 現在地表示（市区町村 or フォールバック）
   // -------------------------
   async updateLocation(position) {
     if (!this.locationStatus) return;
@@ -14,7 +14,6 @@ class UI {
     const lng = position.coords.longitude;
 
     try {
-      // 逆ジオコーディング（Nominatim）
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
       );
@@ -28,41 +27,47 @@ class UI {
         data.address.county ||
         "現在地";
 
-      this.locationStatus.innerHTML = `
-        📍 ${city}
-      `;
+      this.locationStatus.innerText = city;
+
     } catch (e) {
       console.warn("reverse geocode failed", e);
-
-      this.locationStatus.innerHTML = `
-        📍 現在地取得完了
-      `;
+      this.locationStatus.innerText = "現在地取得完了";
     }
   }
 
   // -------------------------
-  // 結果表示
+  // 結果表示（必ず描画保証）
   // -------------------------
   renderResults(results) {
-    if (!this.resultList) return;
+    if (!this.resultList) {
+      console.error("resultList not found");
+      return;
+    }
 
-    this.resultList.innerHTML = results
-      .map(
-        (r) => `
-        <div class="result-card">
-          <h3>${r.name}</h3>
-          <p>🏔 標高: ${r.elevation}m</p>
-          <p>⏱ 到達時間: ${r.travelTime ?? "-"}分</p>
-          <p>🌊 津波到達: ${r.tsunamiTime ?? "-"}分</p>
-          <p>📏 距離: ${r.distance?.toFixed(2) ?? "-"}km</p>
-        </div>
-      `
-      )
-      .join("");
+    if (!Array.isArray(results) || results.length === 0) {
+      this.showEmergencyFallback();
+      return;
+    }
+
+    this.resultList.innerHTML = "";
+
+    results.forEach((r) => {
+      const div = document.createElement("div");
+      div.className = "result-card";
+
+      div.innerHTML = `
+        <div>${r.name ?? "不明"}</div>
+        <div>標高: ${r.elevation ?? "-"} m</div>
+        <div>距離: ${r.distance?.toFixed?.(2) ?? "-"} km</div>
+        <div>到達時間: ${r.travelTime ?? "-"} 分</div>
+      `;
+
+      this.resultList.appendChild(div);
+    });
   }
 
   // -------------------------
-  // 緊急表示
+  // 緊急表示（必ず出る）
   // -------------------------
   showEmergencyFallback() {
     if (!this.resultList) return;
@@ -71,7 +76,7 @@ class UI {
       <div class="emergency">
         ⚠️ 安全な避難先が検出できませんでした<br><br>
 
-        <b>推奨行動：</b><br>
+        推奨行動：<br>
         ・その場から直ちに高台方向へ移動してください<br>
         ・海岸・河川から離れてください<br>
         ・可能であれば標高の高い建物へ避難してください
