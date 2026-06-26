@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentResults = [];
 
   // -------------------------
-  // 移動手段選択
+  // 移動手段
   // -------------------------
   document.querySelectorAll(".transport-button").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -22,67 +22,88 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // -------------------------
-  // 検索処理
+  // 検索
   // -------------------------
   searchButton.addEventListener("click", async () => {
-    console.log("search start");
+    console.log("=== SEARCH START ===");
 
     try {
-      // GPS取得
-      const position = await LocationService.getCurrentPosition();
+      // UI即時反映（固まってない確認用）
+      document.getElementById("locationStatus").innerText = "📡 GPS取得中...";
+
+      console.log("GPS request start");
+
+      // -------------------------
+      // GPS（安全タイムアウト付き）
+      // -------------------------
+      const position = await Promise.race([
+        LocationService.getCurrentPosition(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("GPS TIMEOUT")), 12000)
+        )
+      ]);
+
+      console.log("GPS OK:", position);
+
       UI.updateLocation(position);
 
+      // -------------------------
       // データ取得
+      // -------------------------
       const response = await fetch("data/dummy_safepoints.json");
       const data = await response.json();
 
-      // 検索処理
-      let results = SearchService.search(data, position, selectedMode);
+      console.log("DATA LOADED");
 
       // -------------------------
-      // 🧠 防御的変換（ここ重要）
+      // 検索
       // -------------------------
+      let results = SearchService.search(data, position, selectedMode);
+
       if (!Array.isArray(results)) {
-        console.warn("results is not array:", results);
+        console.warn("results invalid:", results);
         results = [];
       }
 
       currentResults = results;
 
       console.log("RESULTS:", results);
-      console.log("LENGTH:", results.length);
 
       // -------------------------
-      // 🔥 0件分岐（今回の本体）
+      // 0件処理（確実に通す）
       // -------------------------
       if (results.length === 0) {
+        console.log("NO RESULTS → EMERGENCY MODE");
         UI.showEmergencyFallback();
         return;
       }
 
       // -------------------------
-      // 通常表示（最大3件）
+      // 通常表示
       // -------------------------
       UI.renderResults(results.slice(0, 3));
 
     } catch (error) {
-      console.error("search error:", error);
+      console.error("SEARCH ERROR:", error);
 
-      // エラー時も緊急表示
+      // どんな失敗でも必ず表示
       UI.showEmergencyFallback();
     }
   });
 
   // -------------------------
-  // ルート表示（Phase1仮）
+  // ルート
   // -------------------------
   routeButton.addEventListener("click", () => {
-    if (!currentResults || currentResults.length === 0) return;
+    if (!currentResults || currentResults.length === 0) {
+      console.log("NO ROUTE TARGET");
+      return;
+    }
 
     const target = currentResults[0];
 
     if (!target.lat || !target.lng) {
-      console.warn("invalid target:", target);
+      console.warn("invalid target", target);
       return;
     }
 
