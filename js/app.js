@@ -1,5 +1,7 @@
+console.log("NigeNavi app.js loaded");
+
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("NigeNavi start");
+  console.log("DOM ready");
 
   const searchButton = document.getElementById("searchButton");
   const routeButton = document.getElementById("routeButton");
@@ -8,6 +10,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   let selectedMode = "walk";
   let currentResults = [];
   let currentPosition = null;
+
+  // -------------------------
+  // DOMチェック（ここ重要）
+  // -------------------------
+  if (!searchButton || !routeButton) {
+    console.error("BUTTON NOT FOUND", {
+      searchButton,
+      routeButton
+    });
+    return;
+  }
 
   // -------------------------
   // 移動手段（横3択）
@@ -24,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // -------------------------
-  // GPS初期取得（必ず完結）
+  // GPS取得
   // -------------------------
   async function initGPS() {
     try {
@@ -36,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (status) status.innerText = "位置情報取得完了";
 
-      console.log("GPS OK", position);
+      console.log("GPS OK");
 
     } catch (err) {
       console.error("GPS ERROR", err);
@@ -50,17 +63,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initGPS();
 
   // -------------------------
-  // 検索処理
+  // 検索ボタン（ここが本体）
   // -------------------------
   searchButton.addEventListener("click", async () => {
-    console.log("search start");
+    console.log("SEARCH CLICKED");
 
     try {
       const res = await fetch("data/dummy_safepoints.json");
       const data = await res.json();
 
       if (!currentPosition) {
-        console.warn("no gps");
+        console.warn("NO GPS");
         UI.showEmergencyFallback();
         return;
       }
@@ -70,6 +83,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentPosition,
         selectedMode
       );
+
+      console.log("RESULTS:", results);
 
       if (!Array.isArray(results)) {
         results = [];
@@ -85,7 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       UI.renderResults(results.slice(0, 3));
 
     } catch (err) {
-      console.error("search error", err);
+      console.error("SEARCH ERROR", err);
       UI.showEmergencyFallback();
     }
   });
@@ -94,13 +109,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ルート表示
   // -------------------------
   routeButton.addEventListener("click", () => {
+    console.log("ROUTE CLICKED");
+
     if (!currentResults.length) return;
 
     const t = currentResults[0];
 
-    if (!t.lat || !t.lng) return;
+    if (!t?.lat || !t?.lng) return;
 
-    const url = `https://www.google.com/maps?q=${t.lat},${t.lng}`;
-    window.open(url, "_blank");
+    window.open(
+      `https://www.google.com/maps?q=${t.lat},${t.lng}`,
+      "_blank"
+    );
   });
 });
