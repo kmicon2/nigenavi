@@ -1,45 +1,38 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NigeNavi</title>
 
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-  <header class="header">
-    <h1>🚨 NigeNavi</h1>
-    <div id="locationStatus">📡 位置情報取得中...</div>
-  </header>
+  <!-- ヘッダー -->
+  <div class="header">
+    <h1>NigeNavi</h1>
+    <div id="locationStatus">位置情報取得中</div>
+  </div>
 
   <!-- 移動手段 -->
   <div class="transport-group">
-    <button class="transport-button active" data-mode="walk">
-      🚶<br>徒歩
-    </button>
-
-    <button class="transport-button" data-mode="bike">
-      🚲<br>自転車
-    </button>
-
-    <button class="transport-button" data-mode="car">
-      🚗<br>車
-    </button>
+    <button class="transport-button active" data-mode="walk">徒歩</button>
+    <button class="transport-button" data-mode="bike">自転車</button>
+    <button class="transport-button" data-mode="car">車</button>
   </div>
 
-  <!-- 操作 -->
+  <!-- 操作ボタン -->
   <div class="actions">
-    <button id="searchButton">避難先を検索</button>
-    <button id="routeButton">ルート表示</button>
+    <button id="searchButton">検索</button>
+    <button id="routeButton">ルート</button>
   </div>
 
   <!-- 結果 -->
   <div id="resultList"></div>
 
-  <!-- JS -->
+  <!-- JS読み込み（順番重要） -->
   <script src="js/location.js"></script>
   <script src="js/search.js"></script>
   <script src="js/ui.js"></script>
