@@ -1,88 +1,93 @@
-class UI {
-  constructor() {
-    this.resultList = document.getElementById("resultList");
-    this.locationStatus = document.getElementById("locationStatus");
-  }
+const UI = {
+  init() {
+    this.cacheElements();
+    this.bindEvents();
+  },
 
-  // -------------------------
-  // 現在地表示（市区町村 or フォールバック）
-  // -------------------------
-  async updateLocation(position) {
+  cacheElements() {
+    this.locationStatus = document.getElementById("locationStatus");
+    this.resultContainer = document.getElementById("resultContainer");
+    this.searchButton = document.getElementById("searchButton");
+  },
+
+  bindEvents() {
+    // 追加UIイベントがあればここ
+  },
+
+  updateLocation(position) {
     if (!this.locationStatus) return;
 
-    const lat = position.coords.latitude;
-    const lng = position.coords.longitude;
+    const { latitude, longitude, accuracy } = position.coords;
 
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-      );
+    this.locationStatus.innerHTML = `
+      📍 現在地取得完了<br>
+      緯度: ${latitude.toFixed(5)}<br>
+      経度: ${longitude.toFixed(5)}<br>
+      精度: 約${Math.round(accuracy)}m
+    `;
+  },
 
-      const data = await res.json();
-
-      const city =
-        data.address.city ||
-        data.address.town ||
-        data.address.village ||
-        data.address.county ||
-        "現在地";
-
-      this.locationStatus.innerText = city;
-
-    } catch (e) {
-      console.warn("reverse geocode failed", e);
-      this.locationStatus.innerText = "現在地取得完了";
-    }
-  }
-
-  // -------------------------
-  // 結果表示（必ず描画保証）
-  // -------------------------
   renderResults(results) {
-    if (!this.resultList) {
-      console.error("resultList not found");
-      return;
-    }
+    if (!this.resultContainer) return;
 
-    if (!Array.isArray(results) || results.length === 0) {
-      this.showEmergencyFallback();
-      return;
-    }
+    this.resultContainer.innerHTML = results.map(r => {
+      const riskColor =
+        r.margin >= 10 ? "🟢" :
+        r.margin >= 5 ? "🟡" :
+        "🔴";
 
-    this.resultList.innerHTML = "";
+      return `
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:6px;height:40px;background:${
+              r.margin >= 10 ? "#34c759" :
+              r.margin >= 5 ? "#ffcc00" :
+              "#ff3b30"
+            };border-radius:3px;"></div>
 
-    results.forEach((r) => {
-      const div = document.createElement("div");
-      div.className = "result-card";
+            <div>
+              <div style="font-weight:bold;font-size:16px;">
+                ${riskColor} ${r.name}
+              </div>
 
-      div.innerHTML = `
-        <div>${r.name ?? "不明"}</div>
-        <div>標高: ${r.elevation ?? "-"} m</div>
-        <div>距離: ${r.distance?.toFixed?.(2) ?? "-"} km</div>
-        <div>到達時間: ${r.travelTime ?? "-"} 分</div>
+              <div style="font-size:14px;color:#555;">
+                🏃 ${r.travelTime}分 / 🌊 ${r.tsunamiTime}分
+              </div>
+
+              <div style="font-size:12px;color:#888;">
+                距離: ${r.distance.toFixed(2)}km | 標高差: ${r.elevation}m
+              </div>
+            </div>
+          </div>
+        </div>
       `;
+    }).join("");
+  },
 
-      this.resultList.appendChild(div);
-    });
-  }
-
-  // -------------------------
-  // 緊急表示（必ず出る）
-  // -------------------------
   showEmergencyFallback() {
-    if (!this.resultList) return;
+    if (!this.resultContainer) return;
 
-    this.resultList.innerHTML = `
-      <div class="emergency">
-        ⚠️ 安全な避難先が検出できませんでした<br><br>
+    this.resultContainer.innerHTML = `
+      <div class="card" style="border-left:6px solid #d60000;">
+        <div style="color:#d60000;font-weight:bold;font-size:16px;">
+          ⚠️ 安全な避難先が検出できませんでした
+        </div>
 
-        推奨行動：<br>
-        ・その場から直ちに高台方向へ移動してください<br>
-        ・海岸・河川から離れてください<br>
-        ・可能であれば標高の高い建物へ避難してください
+        <div style="margin-top:10px;font-size:14px;line-height:1.6;">
+          推奨行動：<br>
+          ・その場から直ちに高台方向へ移動してください<br>
+          ・海岸・河川から離れてください<br>
+          ・可能であれば標高の高い建物へ避難してください
+        </div>
       </div>
     `;
   }
-}
+};
 
-window.UI = new UI();
+// グローバル公開
+window.UI = UI;
+
+// 初期化
+document.addEventListener("DOMContentLoaded", () => {
+  UI.init();
+});

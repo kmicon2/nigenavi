@@ -1,41 +1,73 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NigeNavi</title>
 
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 
 <body>
 
-  <!-- ヘッダー -->
+  <!-- =========================
+       ヘッダー
+  ========================== -->
   <div class="header">
     <h1>NigeNavi</h1>
-    <div id="locationStatus">位置情報取得中</div>
+    <p class="subtitle">津波避難支援ナビ（Phase1）</p>
   </div>
 
-  <!-- 移動手段 -->
-  <div class="transport-group">
-    <button class="transport-button active" data-mode="walk">徒歩</button>
-    <button class="transport-button" data-mode="bike">自転車</button>
-    <button class="transport-button" data-mode="car">車</button>
+  <!-- =========================
+       メインコンテナ
+  ========================== -->
+  <div class="container">
+
+    <!-- 現在地ステータス -->
+    <div class="card">
+      <div id="locationStatus">GPS待機中...</div>
+    </div>
+
+    <!-- 移動手段 -->
+    <div class="card">
+      <button class="transport-button" data-mode="walk">徒歩</button>
+      <button class="transport-button" data-mode="bike">自転車</button>
+      <button class="transport-button" data-mode="car">車</button>
+    </div>
+
+    <!-- 検索ボタン -->
+    <div class="card">
+      <button id="searchButton" class="search-button">
+        避難先を検索
+      </button>
+    </div>
+
+    <!-- 結果 -->
+    <div id="resultContainer"></div>
+
+    <!-- 将来用：ルートボタン（Maps用） -->
+    <div class="card">
+      <button id="routeButton" class="search-button" style="background:#007aff;">
+        ルートを開く
+      </button>
+    </div>
+
+    <!-- 注意書き -->
+    <div class="notice">
+      このアプリは避難支援を目的とした参考情報です。安全を保証するものではありません。
+    </div>
+
   </div>
 
-  <!-- 操作ボタン -->
-  <div class="actions">
-    <button id="searchButton">検索</button>
-    <button id="routeButton">ルート</button>
-  </div>
-
-  <!-- 結果 -->
-  <div id="resultList"></div>
-
-  <!-- JS読み込み（順番重要） -->
+  <!-- =========================
+       JS読み込み（重要：順番固定）
+  ========================== -->
+  <script src="js/config.js"></script>
   <script src="js/location.js"></script>
+  <script src="js/scoring.js"></script>
   <script src="js/search.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/maps.js"></script>
   <script src="js/app.js"></script>
 
 </body>
