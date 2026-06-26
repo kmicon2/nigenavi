@@ -2,55 +2,73 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>逃げナビ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NigeNavi</title>
 
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
 <body>
 
-<header class="header">
-  <h1>逃げナビ</h1>
-  <p class="subtitle">津波避難支援アプリ</p>
-</header>
+  <!-- =========================
+       ヘッダー
+  ========================== -->
+  <div class="header">
+    <h1>NigeNavi</h1>
+    <p class="subtitle">津波避難支援ナビ（Phase1）</p>
+  </div>
 
-<main class="container">
+  <!-- =========================
+       メインコンテナ
+  ========================== -->
+  <div class="container">
 
-  <section class="card">
-    <h2>現在地</h2>
-    <div id="locationStatus">GPS待機中...</div>
-  </section>
+    <!-- 現在地ステータス -->
+    <div class="card">
+      <div id="locationStatus">GPS待機中...</div>
+    </div>
 
-  <section class="card">
-    <h2>移動手段</h2>
+    <!-- 移動手段 -->
+    <div class="card">
+      <button class="transport-button" data-mode="walk">徒歩</button>
+      <button class="transport-button" data-mode="bike">自転車</button>
+      <button class="transport-button" data-mode="car">車</button>
+    </div>
 
-    <button class="transport-button active" data-mode="walk">徒歩</button>
-    <button class="transport-button" data-mode="bike">自転車</button>
-    <button class="transport-button" data-mode="car">車</button>
-  </section>
+    <!-- 検索ボタン -->
+    <div class="card">
+      <button id="searchButton" class="search-button">
+        避難先を検索
+      </button>
+    </div>
 
-  <section class="card">
-    <button id="searchButton" class="search-button">
-      避難先を検索
-    </button>
-  </section>
+    <!-- 結果 -->
+    <div id="resultContainer"></div>
 
-  <section id="resultContainer"></section>
+    <!-- 将来用：ルートボタン（Maps用） -->
+    <div class="card">
+      <button id="routeButton" class="search-button" style="background:#007aff;">
+        ルートを開く
+      </button>
+    </div>
 
-  <section class="notice">
-    このアプリは参考情報です。安全を保証するものではありません。
-  </section>
+    <!-- 注意書き -->
+    <div class="notice">
+      このアプリは避難支援を目的とした参考情報です。安全を保証するものではありません。
+    </div>
 
-</main>
+  </div>
 
-<script src="js/config.js"></script>
-<script src="js/location.js"></script>
-<script src="js/scoring.js"></script>
-<script src="js/search.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/maps.js"></script>
-<script src="js/app.js"></script>
+  <!-- =========================
+       JS読み込み（重要：順番固定）
+  ========================== -->
+  <script src="js/config.js"></script>
+  <script src="js/location.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/maps.js"></script>
+  <script src="js/app.js"></script>
 
 </body>
 </html>
