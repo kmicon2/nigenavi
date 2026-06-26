@@ -24,33 +24,19 @@
     "tsunamiTime": 30
   },
   {
-
     "name": "磐田市 ヤマハ発動機 見付寮",
-
     "lat": 34.7239,
-
     "lng": 137.8512,
-
     "elevation": 18,
-
     "capacity": 200,
-
     "type": "company_shelter"
-
   },
   {
-
     "name": "日本平公園",
-
     "lat": 34.9756,
-
     "lng": 138.4517,
-
     "elevation": 307,
-
     "capacity": 5000,
-
     "type": "high_ground_park"
-
   }
 ]
