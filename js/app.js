@@ -1,21 +1,19 @@
-console.log("NigeNavi app.js loaded");
+console.log("[NigeNavi] script loaded");
 
-document.addEventListener("DOMContentLoaded", async () => {
-  console.log("DOM ready");
+// グローバル参照チェック
+window.addEventListener("load", () => {
+  console.log("[NigeNavi] window load");
 
   const searchButton = document.getElementById("searchButton");
   const routeButton = document.getElementById("routeButton");
   const status = document.getElementById("locationStatus");
-
-  let selectedMode = "walk";
-  let currentResults = [];
-  let currentPosition = null;
+  const transportButtons = document.querySelectorAll(".transport-button");
 
   // -------------------------
-  // DOMチェック（ここ重要）
+  // DOMチェック（ここで止まらない）
   // -------------------------
   if (!searchButton || !routeButton) {
-    console.error("BUTTON NOT FOUND", {
+    console.error("❌ buttons not found", {
       searchButton,
       routeButton
     });
@@ -23,97 +21,116 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // -------------------------
-  // 移動手段（横3択）
+  // 移動手段
   // -------------------------
-  document.querySelectorAll(".transport-button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".transport-button").forEach(b => {
-        b.classList.remove("active");
-      });
+  let selectedMode = "walk";
 
+  transportButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      transportButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       selectedMode = btn.dataset.mode;
     });
   });
 
   // -------------------------
-  // GPS取得
+  // GPS（安全呼び出し）
   // -------------------------
-  async function initGPS() {
-    try {
-      if (status) status.innerText = "位置情報取得中";
+  let currentPosition = null;
 
-      const position = await LocationService.getCurrentPosition();
-
-      currentPosition = position;
-
-      if (status) status.innerText = "位置情報取得完了";
-
-      console.log("GPS OK");
-
-    } catch (err) {
-      console.error("GPS ERROR", err);
-
-      if (status) status.innerText = "位置情報取得失敗";
-
-      currentPosition = null;
+  function startGPS() {
+    if (!navigator.geolocation) {
+      console.warn("GPS not supported");
+      if (status) status.innerText = "位置情報非対応";
+      return;
     }
+
+    if (status) status.innerText = "位置情報取得中";
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        currentPosition = {
+          coords: {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          }
+        };
+
+        console.log("[GPS OK]", currentPosition);
+
+        if (status) status.innerText = "位置情報取得完了";
+      },
+      (err) => {
+        console.error("[GPS ERROR]", err);
+
+        if (status) status.innerText = "位置情報取得失敗";
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
   }
 
-  await initGPS();
+  startGPS();
 
   // -------------------------
-  // 検索ボタン（ここが本体）
+  // 検索
   // -------------------------
   searchButton.addEventListener("click", async () => {
-    console.log("SEARCH CLICKED");
+    console.log("[SEARCH CLICK]");
 
     try {
       const res = await fetch("data/dummy_safepoints.json");
       const data = await res.json();
 
-      if (!currentPosition) {
-        console.warn("NO GPS");
-        UI.showEmergencyFallback();
+      if (!Array.isArray(data)) {
+        console.error("data invalid");
         return;
       }
 
-      let results = SearchService.search(
+      if (!currentPosition) {
+        console.warn("no gps yet");
+        UI?.showEmergencyFallback?.();
+        return;
+      }
+
+      if (typeof SearchService === "undefined") {
+        console.error("SearchService missing");
+        return;
+      }
+
+      const results = SearchService.search(
         data,
         currentPosition,
         selectedMode
       );
 
-      console.log("RESULTS:", results);
+      console.log("[RESULTS]", results);
 
-      if (!Array.isArray(results)) {
-        results = [];
-      }
-
-      currentResults = results;
-
-      if (results.length === 0) {
-        UI.showEmergencyFallback();
+      if (!results || results.length === 0) {
+        UI?.showEmergencyFallback?.();
         return;
       }
 
-      UI.renderResults(results.slice(0, 3));
+      UI?.renderResults?.(results.slice(0, 3));
 
-    } catch (err) {
-      console.error("SEARCH ERROR", err);
-      UI.showEmergencyFallback();
+    } catch (e) {
+      console.error("[SEARCH ERROR]", e);
+      UI?.showEmergencyFallback?.();
     }
   });
 
   // -------------------------
-  // ルート表示
+  // ルート
   // -------------------------
   routeButton.addEventListener("click", () => {
-    console.log("ROUTE CLICKED");
+    console.log("[ROUTE CLICK]");
 
-    if (!currentResults.length) return;
+    if (!window.__lastResults || !window.__lastResults.length) return;
 
-    const t = currentResults[0];
+    const t = window.__lastResults[0];
 
     if (!t?.lat || !t?.lng) return;
 
@@ -122,4 +139,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       "_blank"
     );
   });
+
+  // results保持（UI依存切り離し）
+  const originalRender = UI?.renderResults;
+  if (originalRender) {
+    UI.renderResults = function(results) {
+      window.__lastResults = results;
+      return originalRender.call(this, results);
+    };
+  }
 });
