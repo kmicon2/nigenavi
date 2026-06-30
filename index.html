@@ -1,74 +1,196 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NigeNavi</title>
 
-  <link rel="stylesheet" href="css/style.css" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#F5FAFF">
+
+    <title>Nige Navi</title>
+
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-  <!-- =========================
-       ヘッダー
-  ========================== -->
-  <div class="header">
-    <h1>NigeNavi</h1>
-    <p class="subtitle">津波避難支援ナビ（Phase1）</p>
-  </div>
+    <main class="container">
 
-  <!-- =========================
-       メインコンテナ
-  ========================== -->
-  <div class="container">
+        <!-- =========================
+             Header
+        ========================== -->
+        <header class="header">
 
-    <!-- 現在地ステータス -->
-    <div class="card">
-      <div id="locationStatus">GPS待機中...</div>
-    </div>
+            <div class="logo-area">
 
-    <!-- 移動手段 -->
-    <div class="card">
-      <button class="transport-button" data-mode="walk">徒歩</button>
-      <button class="transport-button" data-mode="bike">自転車</button>
-      <button class="transport-button" data-mode="car">車</button>
-    </div>
+                <div class="logo" aria-hidden="true">
+                    🌊🏃
+                </div>
 
-    <!-- 検索ボタン -->
-    <div class="card">
-      <button id="searchButton" class="search-button">
-        避難先を検索
-      </button>
-    </div>
+                <div class="title-area">
+                    <h1>Nige Navi</h1>
+                    <p class="subtitle">
+                        津波避難支援アプリ
+                    </p>
+                </div>
 
-    <!-- 結果 -->
-    <div id="resultContainer"></div>
+            </div>
 
-    <!-- 将来用：ルートボタン（Maps用） -->
-    <div class="card">
-      <button id="routeButton" class="search-button" style="background:#007aff;">
-        ルートを開く
-      </button>
-    </div>
+        </header>
 
-    <!-- 注意書き -->
-    <div class="notice">
-      このアプリは避難支援を目的とした参考情報です。安全を保証するものではありません。
-    </div>
+        <!-- =========================
+             Notice
+        ========================== -->
+        <section class="notice-card">
 
-  </div>
+            <p class="notice-text">
+                このアプリは避難支援を目的とした参考情報です。安全を保証するものではありません。
+            </p>
 
-  <!-- =========================
-       JS読み込み（重要：順番固定）
-  ========================== -->
-  <script src="js/config.js"></script>
-  <script src="js/location.js"></script>
-  <script src="js/scoring.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/maps.js"></script>
-  <script src="js/app.js"></script>
+        </section>
+
+        <!-- =========================
+             Current Location
+        ========================== -->
+        <section class="card">
+
+            <h2 class="card-title">
+                現在地情報
+            </h2>
+
+            <div id="locationCard">
+
+                <p id="locationStatus">
+                    位置情報取得中...
+                </p>
+
+                <div id="locationDetail" class="hidden">
+
+                    <div class="info-row">
+                        <span class="label">市区町村</span>
+                        <span id="cityName">---</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">緯度</span>
+                        <span id="latitude">---</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="label">経度</span>
+                        <span id="longitude">---</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- =========================
+             Transport
+        ========================== -->
+        <section class="card">
+
+            <h2 class="card-title">
+                移動手段
+            </h2>
+
+            <div class="transport-grid">
+
+                <button
+                    id="walkButton"
+                    class="transport-button"
+                    data-mode="walk"
+                    type="button">
+
+                    <span class="transport-icon">🚶</span>
+                    <span class="transport-label">徒歩</span>
+
+                </button>
+
+                <button
+                    id="bikeButton"
+                    class="transport-button"
+                    data-mode="bike"
+                    type="button">
+
+                    <span class="transport-icon">🚲</span>
+                    <span class="transport-label">自転車</span>
+
+                </button>
+
+                <button
+                    id="carButton"
+                    class="transport-button"
+                    data-mode="car"
+                    type="button">
+
+                    <span class="transport-icon">🚗</span>
+                    <span class="transport-label">車</span>
+
+                </button>
+
+            </div>
+
+        </section>
+
+        <!-- =========================
+             Search
+        ========================== -->
+        <section>
+
+            <button
+                id="searchButton"
+                class="primary-button"
+                type="button">
+
+                避難先を検索
+
+            </button>
+
+        </section>
+
+        <!-- =========================
+             Search Result
+        ========================== -->
+        <section
+            id="resultArea"
+            class="result-area">
+
+            <!-- メッセージ表示 -->
+            <div
+                id="resultMessage"
+                class="hidden">
+            </div>
+
+            <!-- 候補カード表示 -->
+            <div
+                id="resultList">
+            </div>
+
+        </section>
+
+        <!-- =========================
+             Guide
+        ========================== -->
+        <section>
+
+            <button
+                id="guideButton"
+                class="secondary-button"
+                type="button"
+                disabled>
+
+                案内開始
+
+            </button>
+
+        </section>
+
+    </main>
+
+    <script type="module" src="js/app.js"></script>
 
 </body>
+
 </html>

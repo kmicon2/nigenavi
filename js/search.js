@@ -1,91 +1,216 @@
-//////////////////////////////
-// NigeNavi - search.js
-// データ前処理・フィルタ層
-//////////////////////////////
+/**
+ * ==========================================================
+ * Nige Navi
+ * search.js
+ * 避難先検索モジュール
+ * ==========================================================
+ */
 
-const SearchService = (() => {
+import { APP_CONFIG } from "./config.js";
+import { getCurrentLocation } from "./location.js";
 
-  // =========================
-  // メインフィルタ
-  // =========================
-  function filterSafePoints(points, userPos, mode) {
+let safePoints = [];
 
-    if (!points || !userPos) return [];
+/**
+ * ダミー避難所データ読込
+ */
+export async function loadSafePoints() {
 
-    return points
-      .map(p => enrich(p, userPos, mode))
-      .filter(p => p !== null);
-  }
+    try {
 
-  // =========================
-  // データ整形
-  // =========================
-  function enrich(point, userPos, mode) {
+        const response = await fetch("./data/dummy_safepoints.json");
 
-    if (!point.lat || !point.lng) return null;
+        if (!response.ok) {
+            throw new Error("避難所データの読込に失敗しました。");
+        }
 
-    return {
-      ...point,
-      mode: mode || "walk",
-      elevation: point.elevation ?? 0,
-      inundation: point.inundation ?? false,
-      tsunamiTime: point.tsunamiTime ?? 999
-    };
-  }
+        safePoints = await response.json();
 
-  // =========================
-  // 半径フィルタ（将来用）
-  // =========================
-  function filterByRadius(points, userPos, radiusKm) {
+    } catch (error) {
 
-    const result = [];
+        console.error(error);
 
-    for (const p of points) {
+        safePoints = [];
 
-      const d = LocationService.calcDistance(
-        userPos.lat,
-        userPos.lng,
-        p.lat,
-        p.lng
-      );
-
-      if (d <= radiusKm) {
-        result.push({
-          ...p,
-          distanceKm: d
-        });
-      }
     }
 
-    return result;
-  }
+}
 
-  // =========================
-  // 浸水除外（将来拡張）
-  // =========================
-  function excludeInundation(points) {
-    return points.filter(p => !p.inundation);
-  }
+/**
+ * 避難先検索
+ * @param {string} transportMode
+ * @returns {Array}
+ */
+export function searchSafePoints(transportMode) {
 
-  // =========================
-  // 距離ソート
-  // =========================
-  function sortByDistance(points) {
-    return [...points].sort((a, b) => {
-      return (a.distanceKm || 0) - (b.distanceKm || 0);
+    const location = getCurrentLocation();
+
+    if (
+        location.latitude === null ||
+        location.longitude === null
+    ) {
+        return [];
+    }
+
+    const searchRange =
+        APP_CONFIG.searchRangeKm[transportMode];
+
+    const speed =
+        APP_CONFIG.movementSpeedKmh[transportMode];
+
+    const candidates = [];
+
+    for (const point of safePoints) {
+
+        // 浸水区域は除外
+        if (point.inundation === true) {
+            continue;
+        }
+
+        // 標高判定
+        if (
+            point.elevation <
+            point.requiredElevation +
+                APP_CONFIG.safetyMarginMeters
+        ) {
+            continue;
+        }
+
+        const distance = calculateDistanceKm(
+            location.latitude,
+            location.longitude,
+            point.latitude,
+            point.longitude
+        );
+
+        if (distance > searchRange) {
+            continue;
+        }
+
+        const travelMinutes =
+            (distance / speed) * 60;
+
+        const remainingMinutes =
+            point.tsunamiArrivalMinutes -
+            travelMinutes;
+
+        if (remainingMinutes <= 0) {
+            continue;
+        }
+
+        candidates.push({
+
+            id: point.id,
+
+            name: point.name,
+
+            latitude: point.latitude,
+
+            longitude: point.longitude,
+
+            elevation: point.elevation,
+
+            distanceKm: distance,
+
+            travelMinutes,
+
+            remainingMinutes,
+
+            safetyLevel:
+                getSafetyLevel(remainingMinutes)
+
+        });
+
+    }
+
+    candidates.sort((a, b) => {
+
+        if (
+            b.remainingMinutes !==
+            a.remainingMinutes
+        ) {
+
+            return (
+                b.remainingMinutes -
+                a.remainingMinutes
+            );
+
+        }
+
+        return (
+            a.distanceKm -
+            b.distanceKm
+        );
+
     });
-  }
 
-  // =========================
-  // 公開API
-  // =========================
-  return {
-    filterSafePoints,
-    filterByRadius,
-    excludeInundation,
-    sortByDistance
-  };
+    return candidates.slice(
+        0,
+        APP_CONFIG.maxCandidates
+    );
 
-})();
+}
 
-window.SearchService = SearchService;
+/**
+ * 安全レベル判定
+ */
+function getSafetyLevel(remainingMinutes) {
+
+    if (remainingMinutes >= 10) {
+        return "safe";
+    }
+
+    if (remainingMinutes >= 5) {
+        return "warning";
+    }
+
+    return "danger";
+
+}
+
+/**
+ * 直線距離(km)
+ */
+function calculateDistanceKm(
+    lat1,
+    lon1,
+    lat2,
+    lon2
+) {
+
+    const R = 6371;
+
+    const dLat =
+        toRadians(lat2 - lat1);
+
+    const dLon =
+        toRadians(lon2 - lon1);
+
+    const a =
+        Math.sin(dLat / 2) *
+            Math.sin(dLat / 2) +
+        Math.cos(toRadians(lat1)) *
+            Math.cos(toRadians(lat2)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+
+    const c =
+        2 *
+        Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+        );
+
+    return R * c;
+
+}
+
+function toRadians(value) {
+
+    return (
+        value *
+        Math.PI /
+        180
+    );
+
+}

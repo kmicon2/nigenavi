@@ -1,56 +1,108 @@
-//////////////////////////////
-// NigeNavi - config.js
-// アプリ全体設定
-//////////////////////////////
+/**
+ * ==========================================================
+ * Nige Navi
+ * config.js
+ * アプリ共通設定
+ * ==========================================================
+ */
 
-const CONFIG = {
+/**
+ * アプリ全体設定
+ */
+export const APP_CONFIG = {
 
-  // =========================
-  // 移動距離制限（km）
-  // =========================
-  MOVE_LIMIT: {
-    walk: 3,
-    bike: 7,
-    car: 15
-  },
+    appName: "Nige Navi",
 
-  // =========================
-  // 安全判定
-  // =========================
-  SAFETY: {
+    version: "0.1.0",
 
-    // 浸水エリア除外
-    EXCLUDE_IF_INUNDATION: true,
+    /**
+     * 検索距離（km）
+     */
+    searchRangeKm: {
 
-    // 最低標高マージン（m）
-    MIN_ELEVATION_MARGIN: 5,
+        walk: 3,
 
-    // 津波時間チェックを必須にする
-    REQUIRE_TSUNAMI_TIME_CHECK: true
-  },
+        bike: 7,
 
-  // =========================
-  // UI設定
-  // =========================
-  UI: {
+        car: 15
 
-    // 表示件数
-    MAX_RESULTS: 3,
+    },
 
-    // リスクレベル閾値（余裕時間：分）
-    RISK_LEVELS: {
-      GREEN: 10,
-      YELLOW: 5,
-      RED: 0
+    /**
+     * 平均移動速度（km/h）
+     */
+    movementSpeedKmh: {
+
+        walk: 4,
+
+        bike: 15,
+
+        car: 40
+
+    },
+
+    /**
+     * 標高安全マージン（m）
+     */
+    safetyMarginMeters: 5,
+
+    /**
+     * 最大表示件数
+     */
+    maxCandidates: 3,
+
+    /**
+     * Google Maps URL
+     */
+    googleMapsBaseUrl:
+        "https://www.google.com/maps/dir/?api=1&destination=",
+
+    /**
+     * GPS取得設定
+     */
+    locationOptions: {
+
+        enableHighAccuracy: true,
+
+        timeout: 10000,
+
+        maximumAge: 0
+
     }
-  },
 
-  // =========================
-  // 速度モデル（km/h）
-  // =========================
-  SPEED: {
-    walk: 5,
-    bike: 15,
-    car: 40
-  }
 };
+
+/**
+ * 移動手段
+ */
+export const TRANSPORT_MODE = Object.freeze({
+
+    WALK: "walk",
+
+    BIKE: "bike",
+
+    CAR: "car"
+
+});
+
+/**
+ * UI表示文言
+ */
+export const UI_TEXT = Object.freeze({
+
+    locationLoading:
+        "位置情報取得中...",
+
+    locationError:
+        "位置情報の取得に失敗しました",
+
+    noTransportSelected:
+        "移動手段を選択してください。",
+
+    noCandidate:
+        "安全な避難候補が見つかりませんでした。直ちに周囲の高台や頑丈な建物へ避難してください。",
+
+    selectDestination:
+        "避難先を選択してください。"
+
+});

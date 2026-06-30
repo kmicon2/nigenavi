@@ -1,105 +1,127 @@
-//////////////////////////////
-// NigeNavi - maps.js
-// Phase1 仮ルート（Phase3でGoogle Maps化）
-//////////////////////////////
+/**
+ * ==========================================================
+ * Nige Navi
+ * maps.js
+ * Google Maps 案内モジュール
+ * ==========================================================
+ */
 
-const MapsService = (() => {
+import { APP_CONFIG, UI_TEXT } from "./config.js";
 
-  let currentRoute = null;
+let selectedDestination = null;
 
-  // =========================
-  // 初期化
-  // =========================
-  function init() {
-    bindEvents();
-  }
+/**
+ * 選択中の避難先を設定
+ * @param {Object} destination
+ */
+export function setSelectedDestination(destination) {
 
-  // =========================
-  // イベント
-  // =========================
-  function bindEvents() {
+    selectedDestination = destination;
 
-    const btn = document.getElementById("routeButton");
-    if (!btn) return;
+    const guideButton =
+        document.getElementById("guideButton");
 
-    btn.addEventListener("click", openRoute);
-  }
+    if (guideButton) {
 
-  // =========================
-  // ルート設定
-  // =========================
-  function setRoute(userPos, destination) {
+        guideButton.disabled = false;
 
-    if (!userPos || !destination) return;
-
-    currentRoute = {
-      from: userPos,
-      to: destination,
-      timestamp: Date.now()
-    };
-
-    enableRouteButton(true);
-  }
-
-  // =========================
-  // Google Maps起動（仮）
-  // =========================
-  function openRoute() {
-
-    if (!currentRoute) {
-      alert("ルートがありません");
-      return;
     }
 
-    const { to } = currentRoute;
+}
 
-    // Phase1：目的地だけ表示（シンプル）
+/**
+ * 選択中の避難先取得
+ */
+export function getSelectedDestination() {
+
+    return selectedDestination;
+
+}
+
+/**
+ * 選択解除
+ */
+export function clearSelectedDestination() {
+
+    selectedDestination = null;
+
+    const guideButton =
+        document.getElementById("guideButton");
+
+    if (guideButton) {
+
+        guideButton.disabled = true;
+
+    }
+
+}
+
+/**
+ * Google Maps起動
+ */
+export async function startNavigation() {
+
+    if (!selectedDestination) {
+
+        const ui = await import("./ui.js");
+
+        ui.showError(
+            UI_TEXT.selectDestination
+        );
+
+        return;
+
+    }
+
+    if (
+        selectedDestination.latitude == null ||
+        selectedDestination.longitude == null
+    ) {
+
+        const ui = await import("./ui.js");
+
+        ui.showError(
+            "目的地情報が不正です。"
+        );
+
+        return;
+
+    }
+
+    const destination =
+        `${selectedDestination.latitude},${selectedDestination.longitude}`;
+
     const url =
-      `https://www.google.com/maps?q=${to.lat},${to.lng}`;
+        APP_CONFIG.googleMapsBaseUrl +
+        encodeURIComponent(destination);
 
-    window.open(url, "_blank");
-  }
+    window.location.href = url;
 
-  // =========================
-  // ボタン制御
-  // =========================
-  function enableRouteButton(enabled) {
+}
 
-    const btn = document.getElementById("routeButton");
-    if (!btn) return;
+/**
+ * 案内開始ボタン初期化
+ */
+export function initializeNavigationButton() {
 
-    btn.disabled = !enabled;
-  }
+    const guideButton =
+        document.getElementById("guideButton");
 
-  // =========================
-  // 距離ベースルート（将来用）
-  // =========================
-  function generateRoute(userPos, dest) {
+    if (!guideButton) {
 
-    const d = LocationService.calcDistance(
-      userPos.lat,
-      userPos.lng,
-      dest.lat,
-      dest.lng
+        return;
+
+    }
+
+    guideButton.disabled = true;
+
+    guideButton.addEventListener(
+        "click",
+        () => {
+
+            startNavigation();
+
+        }
     );
 
-    return {
-      distanceKm: d,
-      mode: "direct"
-    };
-  }
-
-  // =========================
-  // 公開API
-  // =========================
-  return {
-    init,
-    setRoute,
-    openRoute,
-    enableRouteButton,
-    generateRoute
-  };
-
-})();
-
-window.MapsService = MapsService;
+}
